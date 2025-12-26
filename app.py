@@ -1,9 +1,21 @@
 import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 # ===== IMPORT CORE MODULES =====
 from core.formatter import parse_rupiah, format_rupiah
 from core.calculator import calculate_trade
 from core.risk import risk_level
+
+# ===== IMPORT PREDICTION MODULES =====
+from data.price_source import get_price_history
+from prediction.indicators import simple_moving_average, rsi
+from prediction.rule_based import market_trend, confidence_score
+from data.assets import ASSETS
+from prediction.multi_asset import analyze_asset
+from prediction.backtest import backtest_simple
+from history.confidence_log import log_confidence
 
 # ===== PAGE CONFIG =====
 st.set_page_config(
@@ -72,20 +84,31 @@ risk_label = risk_level(hasil["rr"])
 st.subheader("📊 Hasil Perhitungan")
 
 col1, col2 = st.columns(2)
+row1, row2 = st.columns(2)
 
-with col1:
-    st.metric(
-        label="💰 Potensi Keuntungan",
-        value=format_rupiah(hasil["profit"]),
-        delta=f"{hasil['profit_pct']:.2f}%"
-    )
+with row1:
 
-with col2:
-    st.metric(
-        label="🛑 Stop Loss (5%)",
-        value=format_rupiah(hasil["stop_loss"]),
-        delta=f"-{hasil['loss_pct']:.0f}%"
-    )
+    with col1:
+        st.metric(
+            label="💰 Potensi Keuntungan",
+            value=format_rupiah(hasil["profit"]),
+            delta=f"{hasil['profit_pct']:.2f}%"
+        )
+        
+    with col2:
+        st.metric(
+            label="📉 Potensi Kerugian",
+            value=format_rupiah(hasil["loss"]),
+            delta=f"-{hasil['loss_pct']:.0f}%"
+        )
+
+with row2:
+    with col1:
+        st.metric(
+            label="🛑 Stop Loss (5%) diharga",
+            value=format_rupiah(hasil["stop_loss"]),
+            delta=f"-{hasil['loss_pct']:.0f}%"
+        )
 
 st.divider()
 
@@ -118,12 +141,35 @@ st.markdown(
 
 # ===== LEVEL 2 PLACEHOLDER =====
 st.divider()
-st.subheader("🔮 Prediction (Level 2 – Coming Soon)")
 
-st.info(
-    "Prediction module akan menampilkan trend, confidence score, dan "
-    "indikator teknikal sederhana (RSI, MA, dll)."
-)
+st.subheader("🌐 Multi-Asset Analysis")
+
+selected_asset = st.selectbox("Pilih Asset", list(ASSETS.keys()))
+
+try:
+    result = analyze_asset(ASSETS[selected_asset])
+except ValueError as e:
+    st.warning(str(e))
+    st.info("Gunakan kembali dalam beberapa menit.")
+    st.stop()
+
+
+st.metric("Trend", result["trend"].capitalize())
+st.metric("Confidence", f"{result['confidence']}%")
+st.metric("RSI", f"{result['rsi']:.2f}")
+
+try:
+    prices = get_price_history(ASSETS[selected_asset], 90)
+    bt = backtest_simple(prices)
+except Exception as e:
+    st.error(str(e))
+    st.stop()
+
+st.subheader("📊 Backtesting (90 Hari)")
+st.metric("Profit (%)", f"{bt['profit_pct']}%")
+st.metric("Total Trades", bt["trades"])
+
+log_confidence(selected_asset, result["confidence"])
 
 # ===== FOOTER =====
 st.divider()

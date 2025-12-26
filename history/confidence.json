@@ -1,0 +1,57 @@
+[
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:30:55.285215"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:32:24.272651"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:33:36.372725"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:36:04.400120"
+  },
+  {
+    "asset": "Ethereum",
+    "confidence": 65,
+    "time": "2025-12-26T16:36:07.418401"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:37:16.647260"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:38:24.179893"
+  },
+  {
+    "asset": "Ethereum",
+    "confidence": 65,
+    "time": "2025-12-26T16:38:26.977483"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:40:19.957733"
+  },
+  {
+    "asset": "Ethereum",
+    "confidence": 65,
+    "time": "2025-12-26T16:40:24.533201"
+  },
+  {
+    "asset": "Bitcoin",
+    "confidence": 65,
+    "time": "2025-12-26T16:40:38.403786"
+  }
+]
