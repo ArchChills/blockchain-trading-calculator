@@ -1,14 +1,36 @@
 import streamlit as st
-from services.calculator import hitung_trading_btc,format_rupiah, parse_rupiah
 
-st.set_page_config(page_title="Bitcoin Trading Calculator", layout="centered")
+# ===== IMPORT CORE MODULES =====
+from core.formatter import parse_rupiah, format_rupiah
+from core.calculator import calculate_trade
+from core.risk import risk_level
 
-st.title("📊 Bitcoin Trading Calculator (NON-AI)")
+# ===== PAGE CONFIG =====
+st.set_page_config(
+    page_title="Crypto Trading Calculator",
+    page_icon="📈",
+    layout="centered"
+)
 
-st.sidebar.header("Input Trading")
+# ===== HEADER =====
+st.title("📈 Crypto Trading Calculator")
+st.caption("Level 1–2 Trading Analytics Tool (Non-AI)")
+st.markdown(
+    "> Educational & analytical purposes only. Not financial advice."
+)
+
+st.divider()
+
+# ===== SIDEBAR INPUT =====
+st.sidebar.header("📥 Input Trading")
+
+asset = st.sidebar.selectbox(
+    "Pilih Aset Crypto",
+    ["Bitcoin (BTC)", "Ethereum (ETH)", "Solana (SOL)", "Custom"]
+)
 
 harga_beli_text = st.sidebar.text_input(
-    "Harga Beli Bitcoin (Rp)",
+    "Harga Beli (Rp)",
     value="900.000.000"
 )
 
@@ -18,66 +40,91 @@ modal_text = st.sidebar.text_input(
 )
 
 target_jual_text = st.sidebar.text_input(
-    "Target Jual Bitcoin (Rp)",
+    "Target Jual (Rp)",
     value="990.000.000"
 )
 
-stop_loss_text = st.sidebar.text_input(
-    "Stop Loss Bitcoin (Rp)",
-    value="870.000.000"
+st.sidebar.info("Stop loss otomatis ditetapkan sebesar 5% dari harga beli.")
+
+# ===== PARSE INPUT =====
+harga_beli = parse_rupiah(harga_beli_text)
+modal = parse_rupiah(modal_text)
+target_jual = parse_rupiah(target_jual_text)
+
+# ===== VALIDATION =====
+if harga_beli <= 0 or modal <= 0:
+    st.error("Harga beli dan modal harus lebih dari 0.")
+    st.stop()
+
+if target_jual <= harga_beli:
+    st.warning("Target jual seharusnya lebih tinggi dari harga beli.")
+
+# ===== CALCULATION =====
+hasil = calculate_trade(
+    harga_beli=harga_beli,
+    target_jual=target_jual,
+    modal=modal
 )
 
-if st.sidebar.button("Hitung Trading"):
-    harga_beli = parse_rupiah(harga_beli_text)
-    modal = parse_rupiah(modal_text)
-    target_jual = parse_rupiah(target_jual_text)
-    stop_loss = parse_rupiah(stop_loss_text)
-    
-    hasil = hitung_trading_btc(
-        harga_beli, modal, target_jual, stop_loss
-    )
+risk_label = risk_level(hasil["rr"])
 
-    st.subheader("📌 Posisi Trading")
+# ===== OUTPUT =====
+st.subheader("📊 Hasil Perhitungan")
 
-    st.write(f"Jumlah BTC dibeli: **{hasil['jumlah_btc']:.6f} BTC**")
+col1, col2 = st.columns(2)
 
-    st.divider()
-    st.subheader("💰 Profit (Reward)")
-
+with col1:
     st.metric(
-        "Keuntungan",
-        format_rupiah(hasil["keuntungan"]),
-        f"{hasil['keuntungan_persen']:.2f}%"
+        label="💰 Potensi Keuntungan",
+        value=format_rupiah(hasil["profit"]),
+        delta=f"{hasil['profit_pct']:.2f}%"
     )
 
+with col2:
     st.metric(
-        "Kerugian Maksimal",
-        format_rupiah(hasil["risiko"]),
-        f"-{hasil['risiko_persen']:.2f}%"
+        label="🛑 Stop Loss (5%)",
+        value=format_rupiah(hasil["stop_loss"]),
+        delta=f"-{hasil['loss_pct']:.0f}%"
     )
 
-    st.divider()
-    st.subheader("⚠️ Risiko (Stop Loss)")
+st.divider()
 
+col3, col4 = st.columns(2)
+
+with col3:
     st.metric(
-        "Kerugian Maksimal",
-        f"Rp {hasil['risiko']:,.0f}",
-        f"-{hasil['risiko_persen']:.2f}%"
+        label="⚖️ Risk / Reward Ratio",
+        value=f"{hasil['rr']:.2f}"
     )
 
-    st.write(
-        f"Penurunan harga ke stop loss: "
-        f"**{hasil['price_change_stop']:.2f}%**"
+with col4:
+    st.metric(
+        label="📉 Risk Level",
+        value=risk_label
     )
 
-    st.divider()
-    st.subheader("📐 Risk–Reward Ratio")
+# ===== TRADE SUMMARY =====
+st.subheader("📝 Ringkasan Trading")
 
-    st.write(f"RRR = **1 : {hasil['rrr']:.2f}**")
+st.markdown(
+    f"""
+    **Aset:** {asset}  
+    **Harga Beli:** {format_rupiah(harga_beli)}  
+    **Target Jual:** {format_rupiah(target_jual)}  
+    **Stop Loss Otomatis (5%):** {format_rupiah(hasil["stop_loss"])}
+    **Modal:** {format_rupiah(modal)}  
+    """
+)
 
-    if hasil["rrr"] >= 2:
-        st.success("Risk–Reward BAGUS (≥ 1:2)")
-    elif hasil["rrr"] >= 1:
-        st.warning("Risk–Reward CUKUP (1:1)")
-    else:
-        st.error("Risk–Reward BURUK (< 1:1)")
+# ===== LEVEL 2 PLACEHOLDER =====
+st.divider()
+st.subheader("🔮 Prediction (Level 2 – Coming Soon)")
+
+st.info(
+    "Prediction module akan menampilkan trend, confidence score, dan "
+    "indikator teknikal sederhana (RSI, MA, dll)."
+)
+
+# ===== FOOTER =====
+st.divider()
+st.caption("© 2025 Crypto Trading Analytics Tool | Built with Streamlit")
